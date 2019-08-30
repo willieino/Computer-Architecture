@@ -170,10 +170,13 @@ class CPU:
                 self.PC += 2
 
             elif command == ADD:
+                # get the address for both of the values 
                 first_register = ram[self.PC + 1]
                 second_register = ram[self.PC + 2]
+                # using the address retrieve the integer values then add them 
                 sum = int(str(self.registers[first_register]), 2) + int(str(self.registers[second_register]), 2)
                 sum = (bin(sum))[2:]
+                # save the sum to the first register
                 self.registers[first_register] = sum
                 self.PC += 3
 
@@ -261,9 +264,13 @@ class CPU:
                 self.PC = address_to_jump_to
   
             elif command == RET:
+                # get the location of our return_to_address
                 SP = self.registers[7]
+                # save the address from the stack
                 address_to_return_to = ram[SP]
+                # update thestack pointer
                 self.registers[7] = ( SP + 1 ) % 255
+                # set the program counter to its new location address
                 self.PC = int(address_to_return_to)
                 self.PC = int(str(self.PC), 2)
             else:
