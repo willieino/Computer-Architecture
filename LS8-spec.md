@@ -412,7 +412,7 @@ Set the `PC` to the address stored in the given register.
 Machine code:
 ```
 01010100 00000rrr
-54 0r
+54 10r
 ```
 
 ### JNE

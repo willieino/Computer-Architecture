@@ -5,7 +5,8 @@ import sys
 
 ram = [0] * 256
 registers = [0] * 8 # [0, 0, 0, 0, 0, 0, 0, 0]
-registers[7] = 0xF4
+
+registers[7] = 255  #hex(255)
 SP = registers[7] # STACK POINTER (SP) R7
 IS = registers[6] # INTERRUPT STATUS (IS) R6
 IM = registers[5] # INTERRUPT MASK (IM) R5
@@ -19,7 +20,8 @@ R5 = registers[5]
 R6 = registers[6]
 R7 = registers[7]
 
-pc = 0
+IR = 0 # contains copy of currently executing command
+PC = 0
 FL = 0
 HLT = 1
 ## ALU ops
@@ -55,7 +57,7 @@ PRA = 1001000
 
 ## PC mutators
 
-CALL = 101000
+CALL = 1010000
 RET = 10001
 
 INT = 1010010
@@ -73,34 +75,20 @@ class CPU:
     """Main CPU class."""
 
     def __init__(self):
-        """Construct a new CPU."""
-        ram = [0] * 256
-        registers = [0] * 8 # [0, 0, 0, 0, 0, 0, 0, 0]
-        registers[7] = 0xF4
-        SP = registers[7] # STACK POINTER (SP) R7
-        IS = registers[6] # INTERRUPT STATUS (IS) R6
-        IM = registers[5] # INTERRUPT MASK (IM) R5
-
-        R0 = registers[0]
-        R1 = registers[1]
-        R2 = registers[2]
-        R3 = registers[3]
-        R4 = registers[4]
-        R5 = registers[5]
-        R6 = registers[6]
-        R7 = registers[7]
-
-        pc = 0
-        FL = 0
+        self.registers = [0] * 8 # [0, 0, 0, 0, 0, 0, 0, 0]
+        self.PC = 0
+        self.FL = 0
         
     def ram_read(self, mar):
         mdr = ram[mar]
-        #value = ram[addr]
-        print("ram_read: ", mdr)
         return mdr
       
     def ram_write(self, mar, mdr): 
         ram[mar] = mdr
+
+    # RETURNS A 8BIT BINARY
+    def p8(self, v):
+        return "{:08b}".format(v)
 
     def load_memory(self, ram, filename):
         address = 0
@@ -119,50 +107,17 @@ class CPU:
             print('I cannot find that file, check the name')
             sys.exit(2)
 
-    ''' def alu(self, op, reg_a, reg_b):
-        """ALU operations."""
-        #pass
-        if op == ADD:
-            self.reg[reg_a] += self.reg[reg_b]
-        elif op == SUB:
-            self.reg[reg_a] -= self.reg[reg_b]     
-        elif op == MUL:
-            self.reg[reg_a] * self.reg[reg_b]
-        elif op == DIV:
-            self.reg[reg_a] // self.reg[reg_b]
-        elif op == MOD:
-            pass
-            # sub code here
-        elif op == INC:
-            pass
-            # sub code here
-        elif op == DEC:
-            pass
-            # sub code here
-        elif op == CMP:
-            pass
-            # sub code here
-        elif op == AND:
-            pass
-                # sub code here
-        elif op == NOT:
-            pass
-            # sub code here
-        elif op == OR:
-            pass
-                # sub code here
-        elif op == XOR:
-            pass
-            # sub code here
-        elif op == SHL:
-            pass
-                # sub code here
-        elif op == SHR:
-            pass
-            # sub code here      
-        else:
-            raise Exception("Unsupported ALU operation") '''
- 
+    def print_registers(self):
+        print("registers[0]: ", self.registers[0])
+        print("registers[1]: ", self.registers[1])
+        print("registers[2]: ", self.registers[2])
+        print("registers[3]: ", self.registers[3])
+        print("registers[4]: ", self.registers[4])
+        print("registers[5]: ", self.registers[5])
+        print("registers[6]: ", self.registers[6])
+        print("registers[7]: ", self.registers[7])
+
+
     def trace(self):
         """
         Handy function to print out the CPU state. You might want to call this
@@ -170,16 +125,16 @@ class CPU:
         """
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
-            self.pc,
-            #self.fl,
+            self.PC,
+            #self.FL,
             #self.ie,
-            self.ram_read(self.pc),
-            self.ram_read(self.pc + 1),
-            self.ram_read(self.pc + 2)
+            self.ram_read(self.PC),
+            self.ram_read(self.PC + 1),
+            self.ram_read(self.PC + 2)
             ), end='')
 
         for i in range(8):
-            print(" %02X" % self.reg[i], end='')
+            print(" %02X" % self.registers[i], end='')
 
         print() 
 
@@ -187,87 +142,122 @@ class CPU:
         """Run the CPU."""
         running = True
         IR = 0
-        pc = 0
-        self.ram_read(pc)
-    
+        self.PC = 0
+        
+        self.ram_read(self.PC)
+        
         while running:
-            command = ram[pc]
-            print("command: ", command)
-            print("this is ram:", ram)
+            #self.trace()
+            command = ram[self.PC]
+            
             if command == HLT:
                 running = False
             
             elif command == LDI:
-                op = ram[pc]
-                register = ram[pc + 1]
-                value = ram[pc + 2]
-                registers[register] = value
-                pc += 3
-                print("LDI", op)
+                op = ram[self.PC]
+                register = ram[self.PC + 1]
+                value = ram[self.PC + 2]
+                self.registers[register] = value
+                self.PC += 3
                
-            elif command == ADD:
-                first_register = ram[PC + 1]
-                second_register = ram[PC + 2]
-                sum = registers[first_register] + registers[second_register]
-                registers[first_register] = sum
-                PC += 3
             elif command == PRN:
-                print("PRN: ", command)
                 # read the register number
-                register = ram[pc + 1]
+                register = int(str(ram[self.PC + 1]), 2)
                 # get the value that is at this register
-                value = registers[register]
+                value = self.registers[register]
                 # print the value
-                print(value)
-                pc += 2
+                print(int(str(value), 2))
+                self.PC += 2
+
             elif command == ADD:
-                op = ram[pc]
-                R0 = ram[pc + 1]
-                R1 = ram[pc + 2] 
-                sum = R0 + R1
-                registers[0] = sum
-                pc += 3          
+                first_register = ram[self.PC + 1]
+                second_register = ram[self.PC + 2]
+                sum = int(str(self.registers[first_register]), 2) + int(str(self.registers[second_register]), 2)
+                sum = (bin(sum))[2:]
+                self.registers[first_register] = sum
+                self.PC += 3
+
             elif command == SUB:
-                op = ram[pc]
-                R0 = ram[pc + 1]
-                R1 = ram[pc + 2] 
-                diff = R0 - R1
-                registers[0] = diff
-                pc += 3                 
+                first_register = ram[self.PC + 1]
+                second_register = ram[self.PC + 2]
+                diff = self.registers[first_register] - self.registers[second_register]
+                self.registers[first_register] = diff
+                self.PC += 3
+
             elif command == MUL:
-                print("mul:")
-                first_register = ram[pc + 1]
-                second_register = ram[pc + 2]
-                prod = first_register * second_register
-                registers[0] = prod
-                print("prod:", prod)
-                pc += 3           
+                first_register = ram[self.PC + 1]
+                second_register = ram[self.PC + 2]
+                # Multiply the first register by the second register
+                prod = self.registers[first_register] * self.registers[second_register]
+                # save the product to the first register
+                self.registers[first_register] = prod
+                self.PC += 3
+
             elif command == DIV:
-                first_register = ram[pc + 1]
-                second_register = ram[pc + 2]
-                value_a = registers[first_register]
-                value_b = registers[second_register]
+                first_register = ram[self.PC + 1]
+                second_register = ram[self.PC + 2]
+                value_a = self.registers[first_register]
+                value_b = self.registers[second_register]
+                # make sure we arent trying to divide by zero
                 if value_b > 0:
                     value = value_a // value_b
-                    registers[first_register] = value
-                    pc += 3
+                    self.registers[first_register] = value
+                    # advance the program counter
+                    self.PC += 3
                 else:
                     print("Unable to divide by zero")
                     running = False
-                      
+
+            elif command == PUSH:
+                self.registers[7] = ( self.registers[7] - 1 ) % 255
+                SP = self.registers[7]
+                register_address = ram[self.PC + 1]
+                value = self.registers[register_address]
+                ram[SP] = value              
+                self.PC += 2
+
+            elif command == POP:
+                SP = self.registers[7]
+                value = ram[SP]
+                register_address = int(str(ram[self.PC + 1]), 2)
+                self.registers[register_address] = value
+                self.registers[7] = ( SP + 1 ) % 255
+                self.PC += 2
+
             elif command == MOD:
                 pass
-                # code here            
+                # code here
+                #             
             elif command == INC:
-                register = ram[pc + 1]
-                value = registers[register]
-                value += 1 
-                registers[register] = value
-                pc += 2
+                register = ram[self.PC + 1]
+                value = self.registers[register]
+                value = hex(value)
+                self.registers[register] = value
+                self.PC += 2
+
+            elif command == JMP:
+                register = ram[self.PC + 1]
+                value = self.registers[register]
+                self.PC = value
+                #value += 2 
+
+            elif command == CALL:
+                # push address of instruction after CALL to stack
+                register_address = ram[self.PC + 1]
+                address_to_jump_to = int(str(self.registers[register_address]), 2)
+                next_instruction_address = bin(self.PC + 2)
+                next_instruction_address = int(next_instruction_address[2:])
+                self.registers[7] = (self.registers[7] - 1) % 255
+                SP = self.registers[7]
+                ram[SP] = next_instruction_address
+                self.PC = address_to_jump_to
+  
+            elif command == RET:
+                SP = self.registers[7]
+                address_to_return_to = ram[SP]
+                self.registers[7] = ( SP + 1 ) % 255
+                self.PC = int(address_to_return_to)
+                self.PC = int(str(self.PC), 2)
             else:
                 running = False    
 
-#s = bin(n) 
-      
-    # removing "0b" prefix 
-   # s1 = s[2:]       
