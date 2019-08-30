@@ -236,6 +236,7 @@ class CPU:
                 self.PC += 2
 
             elif command == JMP:
+                pass # not finished with this
                 register = ram[self.PC + 1]
                 value = self.registers[register]
                 self.PC = value
@@ -243,13 +244,20 @@ class CPU:
 
             elif command == CALL:
                 # push address of instruction after CALL to stack
+                # get the register address from ram
                 register_address = ram[self.PC + 1]
+                # check contents for the address we are going to jump to
                 address_to_jump_to = int(str(self.registers[register_address]), 2)
+                # save the next instruction address for the RETurn
                 next_instruction_address = bin(self.PC + 2)
                 next_instruction_address = int(next_instruction_address[2:])
+                #
                 self.registers[7] = (self.registers[7] - 1) % 255
+                # update the stack pointer
                 SP = self.registers[7]
+                # write the next instruction address to the stack in ram
                 ram[SP] = next_instruction_address
+                # move program counter to new location
                 self.PC = address_to_jump_to
   
             elif command == RET:
