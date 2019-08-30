@@ -7,22 +7,19 @@ ram = [0] * 256
 registers = [0] * 8 # [0, 0, 0, 0, 0, 0, 0, 0]
 
 registers[7] = 255  #hex(255)
-SP = registers[7] # STACK POINTER (SP) R7
-IS = registers[6] # INTERRUPT STATUS (IS) R6
-IM = registers[5] # INTERRUPT MASK (IM) R5
 
-R0 = registers[0]
+""" R0 = registers[0]
 R1 = registers[1]
 R2 = registers[2]
 R3 = registers[3]
 R4 = registers[4]
 R5 = registers[5]
 R6 = registers[6]
-R7 = registers[7]
+R7 = registers[7] """
 
 IR = 0 # contains copy of currently executing command
-PC = 0
-FL = 0
+#PC = 0
+#FL = 0
 HLT = 1
 ## ALU ops
  
@@ -45,6 +42,7 @@ SHL = 10101100
 SHR = 10101101  
 
 ## Other
+
 NOP = 0
 LDI = 10000010
 LD = 10000011
@@ -78,6 +76,10 @@ class CPU:
         self.registers = [0] * 8 # [0, 0, 0, 0, 0, 0, 0, 0]
         self.PC = 0
         self.FL = 0
+        self.SP = 0xF3
+        self.SP = registers[7] # STACK POINTER (SP) R7
+        self.IS = registers[6] # INTERRUPT STATUS (IS) R6
+        self.IM = registers[5] # INTERRUPT MASK (IM) R5
         
     def ram_read(self, mar):
         mdr = ram[mar]
@@ -126,7 +128,7 @@ class CPU:
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
             self.PC,
-            #self.FL,
+            #self.SP,
             #self.ie,
             self.ram_read(self.PC),
             self.ram_read(self.PC + 1),
@@ -143,23 +145,27 @@ class CPU:
         running = True
         IR = 0
         self.PC = 0
-        
+        self.registers[7] = 0xF3
+        self.SP = self.registers[7]
         self.ram_read(self.PC)
         
         while running:
-            #self.trace()
-            command = ram[self.PC]
             
+            #self.print_registers()
+            #self.trace()
+            #print("ram: ", ram)
+            command = ram[self.PC]
+        
             if command == HLT:
                 running = False
             
             elif command == LDI:
                 op = ram[self.PC]
-                register = ram[self.PC + 1]
-                value = ram[self.PC + 2]
-                self.registers[register] = value
-                self.PC += 3
-               
+                register = int(str(ram[self.PC + 1]), 2)
+                value = ram[self.PC + 2] # bin(self.PC + 2)
+                self.registers[register] = int(value)
+                self.PC += 3         
+                
             elif command == PRN:
                 # read the register number
                 register = int(str(ram[self.PC + 1]), 2)
@@ -179,7 +185,7 @@ class CPU:
                 # save the sum to the first register
                 self.registers[first_register] = sum
                 self.PC += 3
-
+ 
             elif command == SUB:
                 first_register = ram[self.PC + 1]
                 second_register = ram[self.PC + 2]
@@ -196,6 +202,24 @@ class CPU:
                 self.registers[first_register] = prod
                 self.PC += 3
 
+            elif command == CMP:
+                # get the two register values
+                first_register = ram[self.PC + 1]
+                second_register = ram[self.PC + 2]
+                value_a = self.registers[first_register]
+                value_b = self.registers[second_register]
+                # compare the values if reg_a is less than reg_b set FL to 00000100
+                if value_a < value_b:
+                    self.FL = 100
+                # compare the values if reg_a is greater than reg_b set FL to 00000010
+                elif value_a > value_b:
+                    self.FL = 10
+                # compare the values if reg_a is equal to reg_b set FL to 00000001
+                else:
+                    self.FL = 1
+                # advance the program counter
+                self.PC += 3             
+                
             elif command == DIV:
                 first_register = ram[self.PC + 1]
                 second_register = ram[self.PC + 2]
@@ -213,18 +237,18 @@ class CPU:
 
             elif command == PUSH:
                 self.registers[7] = ( self.registers[7] - 1 ) % 255
-                SP = self.registers[7]
+                self.SP = self.registers[7]
                 register_address = ram[self.PC + 1]
                 value = self.registers[register_address]
-                ram[SP] = value              
+                ram[self.SP] = value              
                 self.PC += 2
 
             elif command == POP:
-                SP = self.registers[7]
-                value = ram[SP]
+                self.SP = self.registers[7]
+                value = ram[self.SP]
                 register_address = int(str(ram[self.PC + 1]), 2)
                 self.registers[register_address] = value
-                self.registers[7] = ( SP + 1 ) % 255
+                self.registers[7] = ( self.SP + 1 ) % 255
                 self.PC += 2
 
             elif command == MOD:
@@ -238,8 +262,14 @@ class CPU:
                 self.registers[register] = value
                 self.PC += 2
 
+            elif command == JEQ:   
+                if FL == 1:
+                    register = ram[self.PC + 1]
+                    value = self.registers[register]
+                    self.PC = value    
+                
             elif command == JMP:
-                pass # not finished with this
+                #pass # not finished with this
                 register = ram[self.PC + 1]
                 value = self.registers[register]
                 self.PC = value
@@ -250,26 +280,27 @@ class CPU:
                 # get the register address from ram
                 register_address = ram[self.PC + 1]
                 # check contents for the address we are going to jump to
-                address_to_jump_to = int(str(self.registers[register_address]), 2)
+                register_address = int(str(register_address), 2)
+                #print("register_address:", register_address)
+                address_to_jump_to = self.registers[register_address]              
                 # save the next instruction address for the RETurn
                 next_instruction_address = bin(self.PC + 2)
-                next_instruction_address = int(next_instruction_address[2:])
-                #
+                next_instruction_address = int(next_instruction_address[2:])        
                 self.registers[7] = (self.registers[7] - 1) % 255
                 # update the stack pointer
-                SP = self.registers[7]
+                self.SP = self.registers[7]
                 # write the next instruction address to the stack in ram
-                ram[SP] = next_instruction_address
+                ram[self.SP] = next_instruction_address
                 # move program counter to new location
-                self.PC = address_to_jump_to
-  
+                self.PC = int(str(address_to_jump_to), 2)
+ 
             elif command == RET:
                 # get the location of our return_to_address
-                SP = self.registers[7]
+                self.SP = self.registers[7]
                 # save the address from the stack
-                address_to_return_to = ram[SP]
+                address_to_return_to = ram[self.SP]
                 # update thestack pointer
-                self.registers[7] = ( SP + 1 ) % 255
+                self.registers[7] = ( self.SP + 1 ) % 255
                 # set the program counter to its new location address
                 self.PC = int(address_to_return_to)
                 self.PC = int(str(self.PC), 2)
