@@ -305,6 +305,7 @@ class CPU:
                 self.PC += 2
 
             elif command == JEQ:   
+                print("JEQ:")
                 if FL == 1:
                     register = ram[self.PC + 1]
                     value = self.registers[register]
