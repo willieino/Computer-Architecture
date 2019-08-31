@@ -92,6 +92,13 @@ class CPU:
     def p8(self, v):
         return "{:08b}".format(v)
 
+    def get_ascii(self, binary_in):
+        #n = bin(binary_in)
+        print("binary_in: ", binary_in)
+        n = int(str(binary_in), 2)
+        n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
+        return n
+
     def load_memory(self, ram, filename):
         address = 0
         try:
@@ -151,9 +158,9 @@ class CPU:
         
         while running:
             
-            #self.print_registers()
-            #self.trace()
-            #print("ram: ", ram)
+            self.print_registers()
+            self.trace()
+            print("ram: ", ram)
             command = ram[self.PC]
         
             if command == HLT:
@@ -166,6 +173,19 @@ class CPU:
                 self.registers[register] = int(value)
                 self.PC += 3         
                 
+            elif command == PRA:
+                print("PRA:PC:", self.PC)
+                # read the register number
+                register = int(str(ram[self.PC + 1]), 2)
+                # get the value that is at this register
+                value = self.registers[register]
+                print("value:", value)
+                # print the value
+                letter = self.get_ascii(value)
+                print(letter)
+                #print(int(str(value), 2))
+                self.PC += 2
+
             elif command == PRN:
                 # read the register number
                 register = int(str(ram[self.PC + 1]), 2)
@@ -186,6 +206,28 @@ class CPU:
                 self.registers[first_register] = sum
                 self.PC += 3
  
+            elif command == ST:
+                print("ST:PC:", self.PC)
+                # get the two register addresses from the PC
+                register_address_a = ram[self.PC + 1]
+                register_address_b = ram[self.PC + 2]
+                # I have register[0] and register[1]
+                # need to make 
+                #self.registers[register_address_a]
+                #value_b = ram[register_address_b]
+               # ram[register_address_a] = value_b
+                #register_address_a = register_address_b
+                self.registers[register_address_a] = self.registers[register_address_b]
+                #ram[register_address_a] = value_b
+                print("register_address_a:", register_address_a)
+                print("register_address_b:", register_address_b)
+                print("ram[register_address_a]:", ram[register_address_a])
+                self.PC += 3
+                
+                #diff = self.registers[first_register] - self.registers[second_register]
+                #self.registers[first_register] = diff
+                #self.PC += 3
+
             elif command == SUB:
                 first_register = ram[self.PC + 1]
                 second_register = ram[self.PC + 2]
@@ -269,12 +311,16 @@ class CPU:
                     self.PC = value    
                 
             elif command == JMP:
+                print("JMP:PC:", self.PC)
                 #pass # not finished with this
-                register = ram[self.PC + 1]
-                value = self.registers[register]
-                self.PC = value
-                #value += 2 
-
+                register_address = ram[self.PC + 1]
+                address_to_jump_to = self.registers[register_address]
+                address_to_jump_to = int(str(address_to_jump_to), 2)
+                self.PC = address_to_jump_to
+                print("register_address:", register_address)
+                print("address_to_jump_to:", address_to_jump_to)
+                #print("ram[register_address_a]:", ram[register_address_a])                
+                
             elif command == CALL:
                 # push address of instruction after CALL to stack
                 # get the register address from ram
