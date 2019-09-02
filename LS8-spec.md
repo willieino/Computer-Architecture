@@ -239,7 +239,7 @@ Compare the values in two registers.
   otherwise set it to 0.
 
 * If registerA is greater than registerB, set the Greater-than `G` flag
-  to 1, otherwise set it to 0.
+  to 1, otherwise set it to 0.1
 
 Machine code:
 ```
