@@ -88,7 +88,6 @@ class CPU:
         }
 
     def op_add(self, op_a, op_b):
-        print("ADD:PC:", self.PC)
         # get the address for both of the values 
         # using the address retrieve the integer values then add them 
         sum = self.registers[op_a] + self.registers[op_b]
@@ -96,14 +95,12 @@ class CPU:
         self.registers[op_a] = sum
 
     def op_and(self, op_a, op_b):
-        print("AND:PC:", self.PC)
         value_a = self.registers[op_a]
         value_b = self.registers[op_b]
         temp = int(bin(value_a), 2) & int(bin(value_b), 2)
         self.registers[op_a] = temp
 
     def op_cmp(self, op_a, op_b):
-        print("CMP:PC:", self.PC)
         # get the two register values
         value_a = self.registers[op_a]
         value_b = self.registers[op_b]
@@ -118,32 +115,13 @@ class CPU:
             self.FL = 1
 
     def op_call(self, op_a, op_b):
-        print("CALL:PC:", self.PC)
-        # push address of instruction after CALL to stack
-        # get the register address from ram
-        #address_to_jump_to = op_a
-        # check contents for the address we are going to jump to
-        #address_to_jump_to = self.registers[register_address]              
-        # save the next instruction address for the RETurn
-        #next_instruction_address = op_b
-        #self.registers[7] = (self.registers[7] - 1) % 255
-        # update the stack pointer
-        #self.SP = self.registers[7]
-        # write the next instruction address to the stack in ram
-        #self.ram[self.SP] = next_instruction_address
-        # move program counter to new location
-        #self.PC = address_to_jump_to
-
         # push address of instruction after CALL to stack
         # get the register address from ram
         register_address = self.ram[self.PC + 1]
         # check contents for the address we are going to jump to
-        #register_address = int(str(register_address), 2)
-        #print("register_address:", register_address)
         address_to_jump_to = self.registers[register_address]              
         # save the next instruction address for the RETurn
-        next_instruction_address = self.PC + 2
-        #next_instruction_address = int(next_instruction_address[2:])        
+        next_instruction_address = self.PC + 2   
         self.registers[7] = (self.registers[7] - 1) % 255
         # update the stack pointer
         self.SP = self.registers[7]
@@ -152,14 +130,11 @@ class CPU:
         # move program counter to new location
         self.PC = address_to_jump_to
 
-    # ******************************************
     def op_dec(self, op_a, op_b):
-        print("DEC:PC:", self.PC)
         dec = self.registers[op_a] - 1
         self.registers[op_a] = dec
 
     def op_div(self, op_a, op_b):
-        print("DIV:PC:", self.PC)
         value_a = self.registers[op_a]
         value_b = self.registers[op_b]
         # make sure we arent trying to divide by zero
@@ -170,22 +145,18 @@ class CPU:
             #self.PC += 3
         else:
             print("Unable to divide by zero")
-            running = False
-   
+            self.stop = True
+
     def op_hlt(self, op_a, op_b):
         print("STOP NOW!HLT:PC:", self.PC)
         self.stop = True
 
     def op_ldi(self, op_a, op_b):
-        print("LDI:PC:", self.PC)
         self.registers[op_a] = op_b
     
     def op_jne(self, op_a, op_b):
-        print("JNE:PC:", self.PC)
         # If `E` flag is clear (false, 0), jump to the address stored in the given register.   
         test = self.FL << 5
-        print("test:", test)
-        
         if self.FL == 100 or self.FL == 10:
             register = ram[self.PC + 1]
             #register = int(str(register), 2)                    
@@ -196,11 +167,8 @@ class CPU:
             self.PC += 2   
 
     def op_jeq(self, op_a, op_b):
-        print("JEQ:PC:", self.PC)
         test = self.FL << 5
-        print("test:", test)
-        # If `equal` flag is set (true), jump to the address stored in the given register.  
-        
+        # If `equal` flag is set (true), jump to the address stored in the given register.   
         if self.FL == 1:
             register = self.ram[self.PC + 1]
             #register = self.ram[op_a]
@@ -212,33 +180,20 @@ class CPU:
             self.PC += 2     
         
     def op_jmp(self, op_a, op_b):
-        print("JMP:PC:", self.PC)
         #pass # not finished with this
         address_to_jump_to = self.ram[op_a]
         self.registers[op_a] = address_to_jump_to
-        #register_address = int(str(register_address), 2)
-        #address_to_jump_to = self.registers[register_address]
-        #address_to_jump_to = int(str(address_to_jump_to), 2)
         self.PC = address_to_jump_to              
 
 
     def op_ld(self, op_a, op_b):
-        print("LD:PC:", self.PC)
-        #register_address_a = self.ram[self.PC + 1]
-        #register_address_b = self.ram[self.PC + 2]
         self.registers[op_a] = self.registers[op_b]
 
     def op_inc(self, op_a, op_b):
-        print("INC:PC:", self.PC)          
         value = self.ram[op_a] + 1
         self.registers[op_a] = value
-        #value = hex(value)
-        #self.registers[register] = value
 
     def op_mod(self, op_a, op_b):
-        print("MOD:PC:", self.PC)
-        #first_register = self.ram[self.PC + 1]
-        #second_register = self.ram[self.PC + 2]
         value_a = self.registers[op_a]
         value_b = self.registers[op_b]
         # make sure we arent trying to divide by zero
@@ -252,29 +207,23 @@ class CPU:
             running = False    
 
     def op_mul(self, op_a, op_b):
-        print("MUL:PC:", self.PC)
         prod = (self.registers[op_a] * self.registers[op_b])
         self.registers[op_a] = prod
           
     def op_not(self, op_a, op_b):
-        print("NOT:PC:", self.PC)
         pass
         first_register = self.ram[self.PC + 1]
         second_register = self.ram[self.PC + 2]
         value_a = self.registers[first_register]
         value_b = self.registers[second_register]
 
-
-
     def op_push(self, op_a, op_b):
-        print("PUSH:PC:", self.PC)
         self.registers[7] = ( self.registers[7] - 1 ) % 255
         self.SP = self.registers[7]
         value = self.registers[op_a]
         self.ram[self.SP] = value              
 
     def op_pop(self, op_a, op_b):
-        print("POP:PC:", self.PC)
         self.SP = self.registers[7]
         value = self.ram[self.SP]
         register_address = self.ram[self.PC + 1]
@@ -282,7 +231,6 @@ class CPU:
         self.registers[7] = ( self.SP + 1 ) % 255
 
     def op_ret(self, op_a, op_b):
-        print("RET:PC:", self.PC)
         # get the location of our return_to_address
         self.SP = self.registers[7]
         # save the address from the stack
@@ -293,25 +241,15 @@ class CPU:
         self.PC = address_to_return_to
 
     def op_pra(self, op_a, op_b):
-        print("PRA:PC:", self.PC)
         # read the register number
         value = self.registers[op_a]
-        #register = self.ram[op_a]
-        # get the value that is at this register
-        #value = self.registers[op_a]
-        # print the value
-        #value = int(str(value))
-        print("value:", value)
-        
         letter = chr(value)
         print("letter:", letter)
 
     def op_prn(self, op_a, op_b):
-        print("PRN:PC:", self.PC)
         print(self.registers[op_a])
 
     def op_or(self, op_a, op_b):
-        print("OR:PC:", self.PC)
         pass
         first_register = self.ram[self.PC + 1]
         second_register = self.ram[self.PC + 2]
@@ -319,7 +257,6 @@ class CPU:
         value_b = self.registers[second_register]
 
     def op_xor(self, op_a, op_b):
-        print("XOR:PC:", self.PC)
         pass
         first_register = self.ram[self.PC + 1]
         second_register = self.ram[self.PC + 2]
@@ -328,7 +265,6 @@ class CPU:
 
     
     def op_shl(self, op_a, op_b):
-        print("SHL:PC:", self.PC)
         pass
         first_register = self.ram[self.PC + 1]
         second_register = self.ram[self.PC + 2]
@@ -336,33 +272,23 @@ class CPU:
         value_b = self.registers[second_register]    
 
     def op_shr(self, op_a, op_b):
-        print("SHR:PC:", self.PC)
         pass
         first_register = self.ram[self.PC + 1]
         second_register = self.ram[self.PC + 2]
         value_a = self.registers[first_register]
         value_b = self.registers[second_register]                
 
- 
     def op_st(self, op_a, op_b):
-        print("ST:PC:", self.PC)
         # store the value in register b in the address stored in register a
         # get the two register addresses from the PC
-        #register_address_a = self.ram[self.PC + 1]
-        #register_address_b = self.ram[self.PC + 2]
-        self.registers[op_a] = self.registers[op_b] 
-        #self.registers[register_address_a] = self.registers[register_address_b]
-
+         self.registers[op_a] = self.registers[op_b] 
+ 
     def op_sub(self, op_a, op_b):
-        print("SUB:PC:", self.PC)
         first_register = self.ram[self.PC + 1]
         second_register = self.ram[self.PC + 2]
         diff = self.registers[first_register] - self.registers[second_register]
         self.registers[op_a] = diff
 
-
-    # *****************************************************************
-    #             
     def ram_read(self, mar):
         return self.ram[mar]
       
@@ -395,12 +321,6 @@ class CPU:
                     if first_bit == '0' or first_bit == '1':
                         self.ram[address] = int(instruction[:8], 2)
                         address += 1
-                    
-                    #instruction = str(possible_number)
-                    #instruction = hex(possible_number)
-                    #instruction = bin(instruction)
-                    #ram[address] = instruction 
-                    #address += 1
             return self.ram
         except IOError:  #FileNotFoundError
             print('I cannot find that file, check the name')
@@ -472,12 +392,8 @@ class CPU:
         SUB = 0b10100001
         XOR = 0b10101011
         self.registers[7] = 255
-        #IR = #self.ram_read(self.PC)
-        #stop_me = 13
-        #do_it = 0
+ 
         while not self.stop:
-        #while do_it < stop_me:
-            #do_it += 1
             self.IR = self.ram_read(self.PC)
             op_a = self.ram_read(self.PC + 1)
             op_b = self.ram_read(self.PC + 2)
@@ -495,14 +411,6 @@ class CPU:
             if self.IR in self.ops:
                 self.ops[self.IR](op_a, op_b)
               
-            self.print_registers()
-            #self.trace()
-            print("self.ram: ", self.ram)#command = bin(int(ram[self.PC], 2))
-            #print("command:", command)
-        
-            #if command == HLT:
-                #running = False 
-            
-
         sys.exit 
+
 
