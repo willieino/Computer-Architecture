@@ -27,11 +27,12 @@ MUL = 0b10100010
 NOP = 0b00000000
 NOT = 0b01101001
 OR = 0b10101010
-POP = 0b01000110
+POP = 0b010001
 PRA = 0b01001000
 PRN = 0b01000111
 PUSH = 0b01000101
-RET = 0b00010001
+RET = 0b00010001        
+POP = 0b01000110
 SHL = 0b10101100
 SHR = 0b10101101
 ST = 0b10000100
@@ -159,10 +160,8 @@ class CPU:
         # If `E` flag is clear (false, 0), jump to the address stored in the given register.   
         test = self.FL << 5
         if self.FL == 100 or self.FL == 10:
-            register = ram[self.PC + 1]
-            #register = int(str(register), 2)                    
+            register = ram[self.PC + 1]       
             value = self.registers[register]
-            #self.PC = int(str(value), 2) 
             self.PC = value 
         else:
             self.PC += 2   
@@ -172,8 +171,6 @@ class CPU:
         # If `equal` flag is set (true), jump to the address stored in the given register.   
         if self.FL == 1:
             register = self.ram[self.PC + 1]
-            #register = self.ram[op_a]
-            #register = int(str(register), 2)
             value = self.registers[register]
             self.PC = value 
         # if the values are not equal advance the program counter
@@ -185,7 +182,6 @@ class CPU:
         address_to_jump_to = self.ram[op_a]
         self.registers[op_a] = address_to_jump_to
         self.PC = address_to_jump_to              
-
 
     def op_ld(self, op_a, op_b):
         self.registers[op_a] = self.registers[op_b]
@@ -212,9 +208,9 @@ class CPU:
         self.registers[op_a] = prod
           
     def op_not(self, op_a, op_b):
-        pass
         value_a = self.registers[op_a]
-        value_b = self.registers[op_b]
+        value = ~value_a
+        self.registers[op_a] = value
 
     def op_push(self, op_a, op_b):
         self.registers[7] = ( self.registers[7] - 1 ) % 255
@@ -247,13 +243,8 @@ class CPU:
         print("self.ram[op_a]:", self.ram[op_a])
         value_a = bin(self.ram[op_a])
         value_a = str(value_a)
-        print("value_a:", value_a)
-       
+        print("value_a:", value_a)     
         x = self.text_from_bits(value_a)
-        #text = self.get_ascii(op_a)
-        #value = self.registers[op_a]
-        #letter = chr(value)
-        #print(x)
         self.PC += 2
 
     def op_prn(self, op_a, op_b):
@@ -262,24 +253,28 @@ class CPU:
     def op_or(self, op_a, op_b):
         # Perform a bitwise-OR between the values in registerA and registerB, storing the
         # result in registerA.
-        pass
         value_a = self.registers[op_a]
         value_b = self.registers[op_b]
+        value = value_a | value_b
+        self.registers[op_a] = value
 
     def op_xor(self, op_a, op_b):
-        pass
         value_a = self.registers[op_a]
         value_b = self.registers[op_b]
+        value = value_a ^ value_b
+        self.registers[op_a] = value
     
     def op_shl(self, op_a, op_b):
-        pass
         value_a = self.registers[op_a]
         value_b = self.registers[op_b]
+        value = value_a << value_b
+        self.registers[op_a] = value
 
     def op_shr(self, op_a, op_b):
-        pass
         value_a = self.registers[op_a]
         value_b = self.registers[op_b]
+        value = value_a >> value_b
+        self.registers[op_a] = value
 
     def op_st(self, op_a, op_b):
         # store the value in register b in the address stored in register a
@@ -298,6 +293,9 @@ class CPU:
     def ram_write(self, mar, mdr): 
         self.ram[mar] = mdr
 
+    ''' 
+    This is the utilities section
+    '''
     # RETURNS A 8BIT BINARY
     def p8(self, v):
         return "{:08b}".format(v)
@@ -305,10 +303,6 @@ class CPU:
     def text_to_bits(text, encoding='utf-8', errors='surrogatepass'):
         bits = bin(int(binascii.hexlify(text.encode(encoding, errors)), 16))[2:]
         return bits.zfill(8 * ((len(bits) + 7) // 8))
-
-    #def text_from_bits(bits, encoding='utf-8', errors='surrogatepass'):
-        #n = int(bits, 2)
-        #return int2bytes(n).decode(encoding, errors)
 
     def text_from_bits(bits, encoding='utf-8', errors='surrogatepass'):
         n = int(bits, 2)
@@ -326,7 +320,9 @@ class CPU:
         n = int(str(binary_in))
         n.to_bytes((n.bit_length() + 7) // 8, 'big').decode()
         return n
-
+    ''' 
+    End of utilities 
+    '''
     def load_memory(self, filename):
         address = 0
         try:
@@ -357,7 +353,6 @@ class CPU:
         print("registers[6]: ", self.registers[6])
         print("registers[7]: ", self.registers[7])
 
-
     def trace(self):
         """
         Handy function to print out the CPU state. You might want to call this
@@ -380,50 +375,30 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        LDI = 0b10000010
-        PRN = 0b01000111        
-        HLT = 0b00000001
-        ADD = 0b10100000
-        AND = 0b10101000
-        CALL = 0b01010000
-        CMP = 0b10100111
-        DEC = 0b01100110
-        DIV = 0b10100011
-        HLT = 0b00000001
-        INC = 0b01100101
-        JEQ = 0b01010101
-        JMP = 0b01010100
-        JNE = 0b01010110
-        LD = 0b10000011
-        LDI = 0b10000010
-        MOD = 0b10100100
-        MUL = 0b10100010
-        NOP = 0b00000000
-        NOT = 0b01101001
-        OR = 0b10101010
-        POP = 0b01000110
-        PRA = 0b01001000
-        PRN = 0b01000111
-        PUSH = 0b01000101
-        RET = 0b00010001
-        SHL = 0b10101100
-        SHR = 0b10101101
-        ST = 0b10000100
-        SUB = 0b10100001
-        XOR = 0b10101011
+        
         self.registers[7] = 255
  
+        # Main Loop
         while not self.stop:
+
+            # *********************************
+            #
+            # these are for debugging
+            #
+            # self.trace()
+            # self.print_registers()
+            # print("ram:", self.ram)
+            #
+            # End of debugging
+            #
+            # *********************************
+
             self.IR = self.ram_read(self.PC)
             op_a = self.ram_read(self.PC + 1)
             op_b = self.ram_read(self.PC + 2)
-            
-     
+                 
             self.op_size = self.IR >> 6
             self.ins_set = ((self.IR >> 4) & 0b1) == 1
-            
-            #print("self.ins_set:", self.ins_set)
-            #print("self.IR:", self.IR)
             
             if not self.ins_set:
                 self.PC += self.op_size + 1
