@@ -1,6 +1,7 @@
 """CPU functionality."""
 
 import sys
+import binascii
 
 ADD = 0b10100000
 AND = 0b10101000
@@ -212,10 +213,8 @@ class CPU:
           
     def op_not(self, op_a, op_b):
         pass
-        first_register = self.ram[self.PC + 1]
-        second_register = self.ram[self.PC + 2]
-        value_a = self.registers[first_register]
-        value_b = self.registers[second_register]
+        value_a = self.registers[op_a]
+        value_b = self.registers[op_b]
 
     def op_push(self, op_a, op_b):
         self.registers[7] = ( self.registers[7] - 1 ) % 255
@@ -241,42 +240,46 @@ class CPU:
         self.PC = address_to_return_to
 
     def op_pra(self, op_a, op_b):
+        pass
+        print("PRA:PC:", self.PC)
         # read the register number
-        value = self.registers[op_a]
-        letter = chr(value)
-        print("letter:", letter)
+        print("self.registers[op_a]:", self.registers[op_a])
+        print("self.ram[op_a]:", self.ram[op_a])
+        value_a = bin(self.ram[op_a])
+        value_a = str(value_a)
+        print("value_a:", value_a)
+       
+        x = self.text_from_bits(value_a)
+        #text = self.get_ascii(op_a)
+        #value = self.registers[op_a]
+        #letter = chr(value)
+        #print(x)
+        self.PC += 2
 
     def op_prn(self, op_a, op_b):
         print(self.registers[op_a])
 
     def op_or(self, op_a, op_b):
+        # Perform a bitwise-OR between the values in registerA and registerB, storing the
+        # result in registerA.
         pass
-        first_register = self.ram[self.PC + 1]
-        second_register = self.ram[self.PC + 2]
-        value_a = self.registers[first_register]
-        value_b = self.registers[second_register]
+        value_a = self.registers[op_a]
+        value_b = self.registers[op_b]
 
     def op_xor(self, op_a, op_b):
         pass
-        first_register = self.ram[self.PC + 1]
-        second_register = self.ram[self.PC + 2]
-        value_a = self.registers[first_register]
-        value_b = self.registers[second_register]
-
+        value_a = self.registers[op_a]
+        value_b = self.registers[op_b]
     
     def op_shl(self, op_a, op_b):
         pass
-        first_register = self.ram[self.PC + 1]
-        second_register = self.ram[self.PC + 2]
-        value_a = self.registers[first_register]
-        value_b = self.registers[second_register]    
+        value_a = self.registers[op_a]
+        value_b = self.registers[op_b]
 
     def op_shr(self, op_a, op_b):
         pass
-        first_register = self.ram[self.PC + 1]
-        second_register = self.ram[self.PC + 2]
-        value_a = self.registers[first_register]
-        value_b = self.registers[second_register]                
+        value_a = self.registers[op_a]
+        value_b = self.registers[op_b]
 
     def op_st(self, op_a, op_b):
         # store the value in register b in the address stored in register a
@@ -298,6 +301,23 @@ class CPU:
     # RETURNS A 8BIT BINARY
     def p8(self, v):
         return "{:08b}".format(v)
+
+    def text_to_bits(text, encoding='utf-8', errors='surrogatepass'):
+        bits = bin(int(binascii.hexlify(text.encode(encoding, errors)), 16))[2:]
+        return bits.zfill(8 * ((len(bits) + 7) // 8))
+
+    #def text_from_bits(bits, encoding='utf-8', errors='surrogatepass'):
+        #n = int(bits, 2)
+        #return int2bytes(n).decode(encoding, errors)
+
+    def text_from_bits(bits, encoding='utf-8', errors='surrogatepass'):
+        n = int(bits, 2)
+        return n.to_bytes((n.bit_length() + 7) // 8, 'big').decode(encoding, errors) or '\0'
+
+    def int2bytes(i):
+        hex_string = '%x' % i
+        n = len(hex_string)
+        return binascii.unhexlify(hex_string.zfill(n + (n & 1)))
 
     # use this to print letters
     def get_ascii(self, binary_in):
@@ -402,8 +422,8 @@ class CPU:
             self.op_size = self.IR >> 6
             self.ins_set = ((self.IR >> 4) & 0b1) == 1
             
-            print("self.ins_set:", self.ins_set)
-            print("self.IR:", self.IR)
+            #print("self.ins_set:", self.ins_set)
+            #print("self.IR:", self.IR)
             
             if not self.ins_set:
                 self.PC += self.op_size + 1
