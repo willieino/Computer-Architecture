@@ -4,6 +4,7 @@
 
 8 general-purpose 8-bit numeric registers R0-R7.
 
+
 * R5 is reserved as the interrupt mask (IM)
 * R6 is reserved as the interrupt status (IS)
 * R7 is reserved as the stack pointer (SP)
@@ -411,7 +412,7 @@ Set the `PC` to the address stored in the given register.
 Machine code:
 ```
 01010100 00000rrr
-54 0r
+54 10r
 ```
 
 ### JNE
